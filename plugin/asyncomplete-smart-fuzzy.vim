@@ -50,11 +50,11 @@ function! s:sort_by_fuzzy_preprocessor(options, matches) abort
         let l:base = a:options['typed'][l:startcol - 1:]
         if empty(l:base)
             for l:item in l:matches['items']
+                let l:item['weight'] = 0
                 call add(l:items, l:item)
                 let l:startcols += [l:startcol]
             endfor
         else
-
             let l:uppers = s:get_upper_letters(l:base)
             let l:pattern = s:convert_to_pattern(l:uppers)
             let l:pattern_valid = strlen(l:pattern) > 0
@@ -69,7 +69,6 @@ function! s:sort_by_fuzzy_preprocessor(options, matches) abort
                     let l:upper_match = matchstrpos(l:word, l:pattern)
                     if l:upper_match[1] != -1
                         let l:item['weight'] = l:fuzzy_match_weight[l:fuzzy_index]
-                        echo json_decode(l:item)
                         call add(l:items, l:item)
                         let l:startcols += [l:startcol]
                     endif
