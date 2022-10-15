@@ -69,6 +69,7 @@ function! s:sort_by_fuzzy_preprocessor(options, matches) abort
                     let l:upper_match = matchstrpos(l:word, l:pattern)
                     if l:upper_match[1] != -1
                         let l:item['weight'] = l:fuzzy_match_weight[l:fuzzy_index]
+                        echo json_decode(l:item)
                         call add(l:items, l:item)
                         let l:startcols += [l:startcol]
                     endif
