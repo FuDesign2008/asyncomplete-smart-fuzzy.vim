@@ -30,6 +30,7 @@ match both).
   <td>✔️</td>
 </tr>
 </tbody>
+</table>
 
 ## Usage
 
