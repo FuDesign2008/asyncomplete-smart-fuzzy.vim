@@ -45,6 +45,7 @@ endfunction
 function! s:sort_by_fuzzy_preprocessor(options, matches) abort
     let l:items = []
     let l:startcols = []
+    let l:should_sort = 0
     for [l:source_name, l:matches] in items(a:matches)
         let l:startcol = l:matches['startcol']
         let l:base = a:options['typed'][l:startcol - 1:]
@@ -69,11 +70,13 @@ function! s:sort_by_fuzzy_preprocessor(options, matches) abort
                     let l:upper_match = matchstrpos(l:word, l:pattern)
                     if l:upper_match[1] != -1
                         let l:item['weight'] = l:fuzzy_match_weight[l:fuzzy_index]
+                        let l:should_sort = 1
                         call add(l:items, l:item)
                         let l:startcols += [l:startcol]
                     endif
                 else
                     let l:item['weight'] = l:fuzzy_match_weight[l:fuzzy_index]
+                    let l:should_sort = 1
                     call add(l:items, l:item)
                     let l:startcols += [l:startcol]
                 endif
@@ -84,7 +87,10 @@ function! s:sort_by_fuzzy_preprocessor(options, matches) abort
     endfor
 
     let a:options['startcol'] = min(l:startcols)
-    let l:items = sort(l:items, {a, b -> b['weight'] - a['weight']})
+
+    if l:should_sort
+        let l:items = sort(l:items, {a, b -> b['weight'] - a['weight']})
+    endif
 
     call asyncomplete#preprocess_complete(a:options, l:items)
 endfunction
