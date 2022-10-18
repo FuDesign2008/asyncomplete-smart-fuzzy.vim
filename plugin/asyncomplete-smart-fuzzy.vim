@@ -1,4 +1,12 @@
 
+if &compatible || exists('g:asyncomplete_smart_fuzzy_loaded')
+    finish
+endif
+let g:asyncomplete_smart_fuzzy_loaded = 1
+let s:save_cpo = &cpoptions
+set cpoptions&vim
+
+
 function! s:get_upper_letters(str)
     let l:start = 0
     let l:letters = []
@@ -101,3 +109,4 @@ else
     echomsg 'asyncomplete-smart-fuzzy.vim needs matchfuzzypos().'
 endif
 
+let &cpoptions = s:save_cpo
