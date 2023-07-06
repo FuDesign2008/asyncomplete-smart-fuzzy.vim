@@ -36,6 +36,15 @@ function! s:convert_to_pattern(letters)
     return l:reg
 endfunction
 
+" @param {string} kind
+function! s:getBaseWeight(kind)
+    if a:kind ==# 'v' || a:kind ==# 'f' || a:kind ==# 'm'
+        return 10000
+    endif
+
+    return 0
+endfunction
+
 " @param {Options} options
 " @inteferce Options {
 "   typed: String #?
@@ -44,7 +53,8 @@ endfunction
 " @param {Record<string, Match>} matches
 "
 " @inteferce CompleteItem {  # @see :help complete-items
-"   word: String
+"   word: string
+"   kind: string  single letter indicating the type of completion # @see :help complete-item-kind
 " }
 " @inteferce Match {
 "    startcol: Integer
@@ -59,7 +69,7 @@ function! s:sort_by_fuzzy_preprocessor(options, matches) abort
         let l:base = a:options['typed'][l:startcol - 1:]
         if empty(l:base)
             for l:item in l:matches['items']
-                let l:item['weight'] = 0
+                let l:item['weight'] = s:getBaseWeight(l:item['kind'])
                 call add(l:items, l:item)
                 let l:startcols += [l:startcol]
             endfor
@@ -77,13 +87,13 @@ function! s:sort_by_fuzzy_preprocessor(options, matches) abort
                     let l:word = get(l:item, 'word', '')
                     let l:upper_match = matchstrpos(l:word, l:pattern)
                     if l:upper_match[1] != -1
-                        let l:item['weight'] = l:fuzzy_match_weight[l:fuzzy_index]
+                        let l:item['weight'] += l:fuzzy_match_weight[l:fuzzy_index]
                         let l:should_sort = 1
                         call add(l:items, l:item)
                         let l:startcols += [l:startcol]
                     endif
                 else
-                    let l:item['weight'] = l:fuzzy_match_weight[l:fuzzy_index]
+                    let l:item['weight'] += l:fuzzy_match_weight[l:fuzzy_index]
                     let l:should_sort = 1
                     call add(l:items, l:item)
                     let l:startcols += [l:startcol]
