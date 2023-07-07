@@ -41,3 +41,9 @@ match both).
 ## Config
 
 1. `g:asf_min_num_of_chars_for_completion`: default value is `2`
+
+## Changelog
+
+1. 2023-07-07
+   - add `g:asf_min_num_of_chars_for_completion`
+   - modify smart case match logic
