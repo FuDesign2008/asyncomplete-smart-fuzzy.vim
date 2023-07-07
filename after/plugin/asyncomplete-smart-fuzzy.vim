@@ -11,32 +11,36 @@ if exists('g:asf_min_num_of_chars_for_completion') == 0
 endif
 
 
-function! s:get_upper_letters(str)
-    let l:start = 0
-    let l:letters = []
-    let l:result = matchstrpos(a:str, '\C[A-Z]', l:start)
-    while l:result[1] != -1
-        call add(l:letters, l:result[0])
-        let l:start = l:result[2]
-        let l:result = matchstrpos(a:str, '\C[A-Z]', l:start)
-    endwhile
-
-    let l:letters = uniq(l:letters)
-    return l:letters
-endfunction
-
-" @param {string[]} letters
+" @param {string} base
 " @return {string}
-function! s:convert_to_pattern(letters)
-    if len(a:letters) == 0
+function! s:convert_base_to_pattern(base)
+    let length = strlen(a:base)
+
+    if length == 0
         return ''
     endif
-    let l:reg = '\C'
-    for l:item in a:letters
-        " C-style veriable  A-Za-z0-9_
-        " css class name like class-name
-        let l:reg = l:reg . '[a-zA-Z0-9_:#-]*' . l:item
-    endfor
+
+    let hasUpper = match(a:base, '\C[A-Z]')
+    if hasUpper == 0
+        return ''
+    endif
+
+    let index = 0
+
+    let l:reg = '\C^'
+
+    while index < length
+        let theChar = strpart(a:base, index, 1)
+        if match(theChar, '\C[a-z0-9_-]') > -1
+            " C-style veriable  A-Za-z0-9_
+            " css class name like class-name
+            let l:reg = l:reg . '[a-z0-9_:#-]*' . theChar
+        elseif match(theChar, '\C[A-Z]') > -1
+            let l:reg = l:reg . '[a-zA-Z0-9_:#-]*' . theChar
+        endif
+        let index += 1
+    endwhile
+
     return l:reg
 endfunction
 
@@ -83,7 +87,7 @@ function! s:sort_by_fuzzy_preprocessor(options, matches) abort
     for [l:source_name, l:matches] in items(a:matches)
         let l:startcol = l:matches['startcol']
         let l:base = a:options['typed'][l:startcol - 1:]
-        echomsg 'source_name: ' . l:source_name
+        " echomsg 'source_name: ' . l:source_name
         " echomsg 'startcol: ' . l:startcol
         " echomsg 'base: ' . l:base
         " echomsg 'typed: ' . a:options['typed']
@@ -96,19 +100,19 @@ function! s:sort_by_fuzzy_preprocessor(options, matches) abort
         endif
 
         if index(superSourceNames, l:source_name) > -1 || strlen(l:base) >= g:asf_min_num_of_chars_for_completion
-            let l:uppers = s:get_upper_letters(l:base)
-            let l:pattern = s:convert_to_pattern(l:uppers)
+            let l:pattern = s:convert_base_to_pattern(l:base)
             let l:pattern_valid = strlen(l:pattern) > 0
             let l:fuzzy_match = matchfuzzypos(l:matches['items'], l:base, {'key':'word'})
             let l:fuzzy_match_items = l:fuzzy_match[0]
             let l:fuzzy_match_weight = l:fuzzy_match[2]
+            " echomsg 'pattern' . l:pattern
 
             let l:fuzzy_index = 0
             for l:item in l:fuzzy_match_items
                 if l:pattern_valid
                     let l:word = get(l:item, 'word', '')
-                    let l:upper_match = matchstrpos(l:word, l:pattern)
-                    if l:upper_match[1] != -1
+                    let l:smart_match = match(l:word, l:pattern)
+                    if l:smart_match != -1
                         let l:item['weight'] = sourceSuperWeight +  l:fuzzy_match_weight[l:fuzzy_index]
                         let l:should_sort = 1
                         call add(l:items, l:item)
