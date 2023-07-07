@@ -35,5 +35,9 @@ match both).
 ## Usage
 
 1. Just install this vim plugin
-    - Need `matchfuzzypos()` support in vim, run `exists('*matchfuzzypos')` or `help matchfuzzypos` to see more.
+   - Need `matchfuzzypos()` support in vim, run `exists('*matchfuzzypos')` or `help matchfuzzypos` to see more.
 2. Enjoy **smart-case** completion
+
+## Config
+
+1. `g:asf_min_num_of_chars_for_completion`: default value is `2`

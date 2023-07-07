@@ -6,6 +6,10 @@ let g:asyncomplete_smart_fuzzy_loaded = 1
 let s:save_cpo = &cpoptions
 set cpoptions&vim
 
+if exists('g:asf_min_num_of_chars_for_completion') == 0
+    let g:asf_min_num_of_chars_for_completion = 2
+endif
+
 
 function! s:get_upper_letters(str)
     let l:start = 0
@@ -36,13 +40,15 @@ function! s:convert_to_pattern(letters)
     return l:reg
 endfunction
 
-" @param {string} kind
-function! s:getBaseWeight(kind)
-    if a:kind ==# 'v' || a:kind ==# 'f' || a:kind ==# 'm'
-        return 10000
-    endif
 
-    return 0
+function! s:is_file_like(matches)
+    let matchResult = get(a:matches, 'file', {})
+    if empty(matchResult)
+        return 0
+    endif
+    let items = get(matchResult, 'items', [])
+    let l:count = len(items)
+    return l:count > 0 ? 1 : 0
 endfunction
 
 " @param {Options} options
@@ -64,16 +70,32 @@ function! s:sort_by_fuzzy_preprocessor(options, matches) abort
     let l:items = []
     let l:startcols = []
     let l:should_sort = 0
+    let superWeights = {}
+    let asyncompleteLspSuperWeightValue = 10000
+    let superWeightValue = 1000
+    let superSourceNames = []
+
+    if s:is_file_like(a:matches)
+        let superWeights.file = superWeightValue
+        call add(superSourceNames, 'file')
+    endif
+
     for [l:source_name, l:matches] in items(a:matches)
         let l:startcol = l:matches['startcol']
         let l:base = a:options['typed'][l:startcol - 1:]
-        if empty(l:base)
-            for l:item in l:matches['items']
-                let l:item['weight'] = s:getBaseWeight(l:item['kind'])
-                call add(l:items, l:item)
-                let l:startcols += [l:startcol]
-            endfor
+        echomsg 'source_name: ' . l:source_name
+        " echomsg 'startcol: ' . l:startcol
+        " echomsg 'base: ' . l:base
+        " echomsg 'typed: ' . a:options['typed']
+        " echomsg 'matches: ' . join(l:matches.items, ', ')
+
+        if stridx(l:source_name, 'asyncomplete_lsp_') > -1
+            let sourceSuperWeight = asyncompleteLspSuperWeightValue
         else
+            let sourceSuperWeight = get(superWeights, l:source_name, 0)
+        endif
+
+        if index(superSourceNames, l:source_name) > -1 || strlen(l:base) >= g:asf_min_num_of_chars_for_completion
             let l:uppers = s:get_upper_letters(l:base)
             let l:pattern = s:convert_to_pattern(l:uppers)
             let l:pattern_valid = strlen(l:pattern) > 0
@@ -87,13 +109,13 @@ function! s:sort_by_fuzzy_preprocessor(options, matches) abort
                     let l:word = get(l:item, 'word', '')
                     let l:upper_match = matchstrpos(l:word, l:pattern)
                     if l:upper_match[1] != -1
-                        let l:item['weight'] += l:fuzzy_match_weight[l:fuzzy_index]
+                        let l:item['weight'] = sourceSuperWeight +  l:fuzzy_match_weight[l:fuzzy_index]
                         let l:should_sort = 1
                         call add(l:items, l:item)
                         let l:startcols += [l:startcol]
                     endif
                 else
-                    let l:item['weight'] += l:fuzzy_match_weight[l:fuzzy_index]
+                    let l:item['weight'] = sourceSuperWeight +  l:fuzzy_match_weight[l:fuzzy_index]
                     let l:should_sort = 1
                     call add(l:items, l:item)
                     let l:startcols += [l:startcol]
