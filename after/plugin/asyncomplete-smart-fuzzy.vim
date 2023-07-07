@@ -31,12 +31,13 @@ function! s:convert_base_to_pattern(base)
 
     while index < length
         let theChar = strpart(a:base, index, 1)
-        if match(theChar, '\C[a-z0-9_-]') > -1
+        if match(theChar, '\C[a-z0-9_:#$-]') > -1
             " C-style veriable  A-Za-z0-9_
             " css class name like class-name
-            let l:reg = l:reg . '[a-z0-9_:#-]*' . theChar
+            " $ for $el
+            let l:reg = l:reg . '[a-z0-9_:#$-]*' . theChar
         elseif match(theChar, '\C[A-Z]') > -1
-            let l:reg = l:reg . '[a-zA-Z0-9_:#-]*' . theChar
+            let l:reg = l:reg . '[a-zA-Z0-9_:#$-]*' . theChar
         endif
         let index += 1
     endwhile
