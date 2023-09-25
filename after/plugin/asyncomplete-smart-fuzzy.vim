@@ -20,10 +20,10 @@ function! s:convert_base_to_pattern(base)
         return ''
     endif
 
-    let hasUpper = match(a:base, '\C[A-Z]')
-    if hasUpper == 0
-        return ''
-    endif
+    " let hasUpper = match(a:base, '\C[A-Z]')
+    " if hasUpper == 0
+        " return ''
+    " endif
 
     let index = 0
 
