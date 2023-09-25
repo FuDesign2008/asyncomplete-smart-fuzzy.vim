@@ -106,26 +106,30 @@ function! s:sort_by_fuzzy_preprocessor(options, matches) abort
             let l:fuzzy_match = matchfuzzypos(l:matches['items'], l:base, {'key':'word'})
             let l:fuzzy_match_items = l:fuzzy_match[0]
             let l:fuzzy_match_weight = l:fuzzy_match[2]
+            let l:visited = {}
             " echomsg 'pattern' . l:pattern
 
             let l:fuzzy_index = 0
             for l:item in l:fuzzy_match_items
-                if l:pattern_valid
-                    let l:word = get(l:item, 'word', '')
-                    let l:smart_match = match(l:word, l:pattern)
-                    if l:smart_match != -1
+                let l:word = get(l:item, 'word', '')
+                if strlen(l:word) > 0 &&  !has_key(l:visited, l:word)
+                    if l:pattern_valid
+                        let l:smart_match = match(l:word, l:pattern)
+                        if l:smart_match != -1
+                            let l:item['weight'] = sourceSuperWeight +  l:fuzzy_match_weight[l:fuzzy_index]
+                            let l:should_sort = 1
+                            call add(l:items, l:item)
+                            let l:visited[l:word] = 1
+                            let l:startcols += [l:startcol]
+                        endif
+                    else
                         let l:item['weight'] = sourceSuperWeight +  l:fuzzy_match_weight[l:fuzzy_index]
                         let l:should_sort = 1
                         call add(l:items, l:item)
+                        let l:visited[l:word] = 1
                         let l:startcols += [l:startcol]
                     endif
-                else
-                    let l:item['weight'] = sourceSuperWeight +  l:fuzzy_match_weight[l:fuzzy_index]
-                    let l:should_sort = 1
-                    call add(l:items, l:item)
-                    let l:startcols += [l:startcol]
                 endif
-
                 let l:fuzzy_index += 1
             endfor
         endif
